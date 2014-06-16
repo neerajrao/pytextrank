@@ -1,26 +1,29 @@
 # Graph
+# Implements Weighted-PageRank
+
+DAMPING = 0.85
 
 class Graph:
     def __init__(self):
-        self.vertset = {}
+        self.vertSet = {}
         self.size = 0
 
     def addVertex(self, key):
-        if not key in self.vertset:
+        if not key in self.vertSet:
             self.size += 1
-            self.vertset[key] = Vertex(key)
+            self.vertSet[key] = Vertex(key)
 
     def getVertex(self, key):
-        return self.vertset.get(key)
+        return self.vertSet.get(key)
 
     def __getitem__(self, key):
         return getVertex(key)
 
     def __contains__(self, key):
-        return key in self.vertset
+        return key in self.vertSet
 
     def getVertices(self):
-        return self.vertset.values()
+        return self.vertSet.values()
 
     def __iter__(self):
         return iter(getVertices())
@@ -30,9 +33,15 @@ class Graph:
             addVertex(fromKey)
         self.getVertex(fromKey).addNeighbor(toKey, edgeWeight)
 
+    def getPageRank(self):
+        '''
+        Plain-vanilla Pagerank.
+        '''
+        pass # TODO
+
 class Vertex:
     def __init__(self, key):
-        self.key = key
+        self.id = key
         self.adjset = {}
 
     def addNeighbor(self, key, weight=0):
@@ -42,6 +51,9 @@ class Vertex:
         self.adjset[key] = weight
 
     def getConnectedKeys(self):
+        '''
+        Returns a list of keys of connected vertices.
+        '''
         return self.adjset.keys()
 
     def getWeight(self, v):
