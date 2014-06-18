@@ -2,6 +2,8 @@
 # Implements Weighted-PageRank
 
 import numpy as np
+import re
+from math import log
 
 DAMPING = 0.85
 MAX_ITER = 1000
@@ -28,11 +30,26 @@ class Graph:
             self.addVertex(toKey)
         self.getVertex(toKey).inSet[fromKey] = edgeWeight # Adds incoming connection to vertex
 
+    def addSentence(self, index, sentence):
+        self.addVertex(index)
+        self.getVertex(index).bag = set(re.findall(r"[\w']+", sentence))
+        for vertex in self.getOtherVertices(index):
+            # create edge with weight = Jaccard coefficient
+            edgeWeight = self.calculateJaccardCoefficient(vertex.bag, self.getVertex(index).bag)
+            self.addEdge(index,vertex.id,edgeWeight)
+
+    def calculateJaccardCoefficient(self, bag1, bag2):
+        return float(len(bag1.intersection(bag2)))/(log(len(bag1)) + log(len(bag2))) # normalize by sentence lengths
+                                                                                     # to avoid bias towards longer sentences
+
     def getVertex(self, key):
         return self.vertSet.get(key)
 
     def getVertices(self):
         return self.vertSet.values()
+
+    def getOtherVertices(self, key):
+        return [elem for elem in self.getVertices() if elem.id <> key]
 
     def getPlainVanillaPageRank(self, method=PAGERANKMETHODS[0]):
         '''
@@ -147,6 +164,7 @@ class Vertex:
         self.id = key
         self.outSet = {} # outgoing edges
         self.inSet = {} # incoming edges
+        self.bag = {}
 
     def getIncomingKeys(self):
         '''
@@ -186,6 +204,7 @@ def testGraph():
     assert g.getVertex('e') == None # non-existent key
     assert 'd' in g.getVertex('a').getOutgoingKeys()
     assert 'a' in g.getVertex('d').getIncomingKeys()
+    assert len(g.getOtherVertices('a')) == 3
 
     g.addVertex('a')                                   # key 'a' is already in the graph
     assert g.N == 4                                 # nothing should have been added
@@ -207,6 +226,12 @@ def testGraph():
     assert 'a' in g1.getVertex('b').getIncomingKeys()
 
     g1.getPlainVanillaPageRank(method='iterativemethod')
+
+    g2 = Graph()
+    g2.addSentence(1,'hi how are you')
+    g2.addSentence(2,"hi i'm fine")
+    print "out: %s" % map(lambda x: (x.id, x.outSet), g2.getVertices())
+    print "in:  %s" % map(lambda x: (x.id, x.inSet), g2.getVertices())
 
 if __name__ == '__main__':
     testGraph()
