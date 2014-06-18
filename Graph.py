@@ -32,13 +32,13 @@ class Graph:
 
     def addSentence(self, index, sentence):
         self.addVertex(index)
-        self.getVertex(index).bag = set(re.findall(r"[\w']+", sentence))
-        for vertex in self.getOtherVertices(index):
-            # create edge with weight = Jaccard coefficient
-            edgeWeight = self.calculateJaccardCoefficient(vertex.bag, self.getVertex(index).bag)
-            self.addEdge(index,vertex.id,edgeWeight)
+        thisVertex = self.getVertex(index)
+        thisVertex.bag = set(re.findall(r"[\w']+", sentence))
+        for otherVertex in self:
+            edgeWeight = self.calculateSimilarity(otherVertex.bag, thisVertex.bag)
+            self.addEdge(index, otherVertex.id, edgeWeight)
 
-    def calculateJaccardCoefficient(self, bag1, bag2):
+    def calculateSimilarity(self, bag1, bag2):
         return float(len(bag1.intersection(bag2)))/(log(len(bag1)) + log(len(bag2))) # normalize by sentence lengths
                                                                                      # to avoid bias towards longer sentences
 
@@ -48,12 +48,20 @@ class Graph:
     def getVertices(self):
         return self.vertSet.values()
 
-    def getOtherVertices(self, key):
-        return [elem for elem in self.getVertices() if elem.id <> key]
-
-    def getPlainVanillaPageRank(self, method=PAGERANKMETHODS[0]):
+    def getPageRank(self, weighted=True, method=PAGERANKMETHODS[0]):
         '''
-        Plain-vanilla Pagerank.
+        Calculate page rank of graph vertices.
+
+        Arguments
+        ---------
+        weighted    If True, returns edge-weighted page rank
+                    else,    returns normal page rank
+        method      'powermethod' uses the power method for calculating the page rank
+                    'iterative'   uses the iterative method for calculating the page rank
+
+        Returns
+        -------
+        pRank       pagerank array of shape [1,N] where N = number of vertices in graph.
         '''
         if method not in PAGERANKMETHODS:
             raise PageRankNotAvailableException("'method' parameter must be one of the following: %s" % PAGERANKMETHODS)
@@ -61,16 +69,28 @@ class Graph:
         if self.N == 0:
             raise PageRankNotAvailableException("empty graph!")
 
-        pRank = np.ones(self.N) / self.N # initially all 1/N
-        if(method == PAGERANKMETHODS[0]):
-            M = self.buildM()
-            power = self.powerMethod(pRank, M)
-            print power
-            return power
+        if weighted:
+            pRank = np.ones(self.N) / self.N # TODO: change this??
         else:
-            A = self.buildA()
+            pRank = np.ones(self.N) / self.N # initially all 1/N
+
+        if(method == PAGERANKMETHODS[0]): # power method
+            if weighted:
+                M = self.buildWeightedM()
+            else:
+                M = self.buildM()
+
+            power = self.powerMethod(pRank, M)
+            #print power
+            return power
+        else: # iterative method
+            if weighted:
+                A = self.buildWeightedA()
+            else:
+                A = self.buildA()
+
             it = self.iterative(pRank, A)
-            print it
+            #print it
             return it
 
     def powerMethod(self, pRank, M):
@@ -87,15 +107,31 @@ class Graph:
             pRank = newPRank
         raise PageRankNotAvailableException('Pagerank did not terminate within %d iterations' % MAX_ITER)
 
+    def iterative(self, pRank, A):
+        '''
+        Calculate pagerank using the iterative method.
+        '''
+        newPRank = np.dot(DAMPING*A,pRank) + ((1-DAMPING)/self.N)
+        err = np.abs(newPRank-pRank).sum()
+        if err < TOL:
+            return newPRank
+        it = self.iterative(newPRank, A)
+        return it/np.linalg.norm(it)
+
     def buildM(self):
         '''
-        Builds the Google Matrix or M.
+        Builds the Google Matrix M.
         This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
 
         A = self.buildA()
 
-        # replace zero columns with initial probability 1/N
+        # replace zero columns with initial probability 1/N so we have a column stochastic matrix
+        # For example:
+        # [[ 0.   0.   0.   0. ]                   [[ 0.   0.25   0.25   0. ]
+        #  [ 0.5  0.   0.   0. ]   ---becomes-->    [ 0.5  0.25   0.25   0. ]
+        #  [ 0.5  0.   0.   1. ]                    [ 0.5  0.25   0.25   1. ]
+        #  [ 0.   0.   0.   0. ]]                   [ 0.   0.25   0.25   0. ]]
         sumA = np.sum(A, axis=0)
         nonzeroindices = np.nonzero(sumA)
         sumA[sumA==0] += float(1)/self.N
@@ -109,7 +145,7 @@ class Graph:
         Returns an out-degree matrix that has elements set to 1/outdegree(x) for all
         elements (x,y) where vertex x connects to vertex y.
 
-        E.g. for a graph with 4 vertices 0, 1, 2, 3 with
+        E.g. for a graph with 4 vertices 0, 1, 2, 3 with connections
         0 -> 1
         0 -> 2
         3 -> 2,
@@ -124,7 +160,7 @@ class Graph:
         element (2,0) is non-zero because node 0 is connected to node 2. It is 0.5 because node 0 has outdegree TWO (two outgoing edges)
         element (2,3) is non-zero because node 3 is connected to node 2. It is 1   because node 1 has outdegree ONE (one outgoing edges)
 
-        WARNING! Note that the direction is from column to row!!! (1,0) being non-zero indicates a connection FROM 0 TO 1 and NOT from 1 to 0!!
+        WARNING! Note that the direction is from column to row!!! i.e., (1,0) being non-zero indicates a connection FROM 0 TO 1 and NOT from 1 to 0!!
 
         Note: This matrix needs to be calculated only per invocation of the Pagerank algorithm.
         '''
@@ -139,16 +175,62 @@ class Graph:
         A[list(connectedVertices)] = float(1) / outDegrees
         return A
 
-    def iterative(self, pRank, A):
+    def buildWeightedM(self):
         '''
-        Calculate pagerank using the iterative method.
+        Builds the Google Matrix M.
+        This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
-        newPRank = np.dot(DAMPING*A,pRank) + ((1-DAMPING)/self.N)
-        err = np.abs(newPRank-pRank).sum()
-        if err < TOL:
-            return newPRank
-        it = self.iterative(newPRank, A)
-        return it/np.linalg.norm(it)
+
+        A = self.buildA()
+
+        # replace zero columns with initial probability 1/N so we have a column stochastic matrix
+        # For example:
+        # [[ 0.   0.   0.   0. ]                   [[ 0.   0.25   0.25   0. ]
+        #  [ 0.5  0.   0.   0. ]   ---becomes-->    [ 0.5  0.25   0.25   0. ]
+        #  [ 0.5  0.   0.   1. ]                    [ 0.5  0.25   0.25   1. ]
+        #  [ 0.   0.   0.   0. ]]                   [ 0.   0.25   0.25   0. ]]
+        sumA = np.sum(A, axis=0)
+        nonzeroindices = np.nonzero(sumA)
+        sumA[sumA==0] += float(1)/self.N
+        sumA[nonzeroindices] = 0
+        M = A + np.tile(sumA,(self.N,1))
+
+        return M
+
+    def buildWeightedA(self):
+        '''
+        Returns an out-degree matrix that has elements set to weight(edge(x,y))/(sum(weight(edge(x,n)) for all n))
+        for each pair (x,y) where vertex x connects to vertex y.
+
+        E.g. for a graph with 4 vertices 0, 1, 2, 3 with connections
+        0 -> 1 with weight 1
+        0 -> 2 with weight 2
+        3 -> 2 with weight 4
+        the following matrix is returned:
+        [[ 0.    0.   0.   0. ]
+         [ 0.33  0.   0.   0. ]
+         [ 0.66  0.   0.   1. ]
+         [ 0.    0.   0.   0. ]]
+
+        Explanation:
+        element (1,0) is non-zero because node 0 is connected to node 1. It is 0.33 = (1/(1+2))
+        element (2,0) is non-zero because node 0 is connected to node 2. It is 0.66 = (2/(1+2))
+        element (2,3) is non-zero because node 3 is connected to node 2. It is 1    = (4/4)
+
+        WARNING! Note that the direction is from column to row!!! i.e., (1,0) being non-zero indicates a connection FROM 0 TO 1 and NOT from 1 to 0!!
+
+        Note: This matrix needs to be calculated only per invocation of the Pagerank algorithm.
+        '''
+        A = np.zeros((self.N, self.N))
+        _A = [elem for vertex in self for elem in \
+                            map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], \
+                                            self.getVertex(x).getOutDegree()], \
+                                vertex.getIncomingKeys())]
+        _A = np.dstack(_A)[0]
+        connectedVertices = np.dstack(_A[0])[0]
+        outDegrees = _A[1]
+        A[list(connectedVertices)] = float(1) / outDegrees
+        return A
 
     def __getitem__(self, key):
         return self.getVertex(key)
@@ -204,7 +286,6 @@ def testGraph():
     assert g.getVertex('e') == None # non-existent key
     assert 'd' in g.getVertex('a').getOutgoingKeys()
     assert 'a' in g.getVertex('d').getIncomingKeys()
-    assert len(g.getOtherVertices('a')) == 3
 
     g.addVertex('a')                                   # key 'a' is already in the graph
     assert g.N == 4                                 # nothing should have been added
@@ -215,7 +296,7 @@ def testGraph():
     assert 'b' in g.getVertex('a').getOutgoingKeys()
     assert 'c' in g.getVertex('b').getIncomingKeys()
 
-    g.getPlainVanillaPageRank()
+    g.getPageRank()
 
     g1 = Graph()
     g1.addVertex('a')
@@ -225,7 +306,7 @@ def testGraph():
     assert 'b' in g1.getVertex('a').getOutgoingKeys()
     assert 'a' in g1.getVertex('b').getIncomingKeys()
 
-    g1.getPlainVanillaPageRank(method='iterativemethod')
+    g1.getPageRank(method='iterativemethod')
 
     g2 = Graph()
     g2.addSentence(1,'hi how are you')
