@@ -162,10 +162,11 @@ class Graph:
 
         WARNING! Note that the direction is from column to row!!! i.e., (1,0) being non-zero indicates a connection FROM 0 TO 1 and NOT from 1 to 0!!
 
-        Note: This matrix needs to be calculated only per invocation of the Pagerank algorithm.
+        Note: This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
         A = np.zeros((self.N, self.N))
         _A = [elem for vertex in self for elem in \
+                            # x connects to vertex
                             map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], \
                                             self.getVertex(x).getOutDegree()], \
                                 vertex.getIncomingKeys())]
@@ -181,7 +182,7 @@ class Graph:
         This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
 
-        A = self.buildA()
+        A = self.buildWeightedA()
 
         # replace zero columns with initial probability 1/N so we have a column stochastic matrix
         # For example:
@@ -219,17 +220,18 @@ class Graph:
 
         WARNING! Note that the direction is from column to row!!! i.e., (1,0) being non-zero indicates a connection FROM 0 TO 1 and NOT from 1 to 0!!
 
-        Note: This matrix needs to be calculated only per invocation of the Pagerank algorithm.
+        Note: This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
         A = np.zeros((self.N, self.N))
         _A = [elem for vertex in self for elem in \
+                            # x connects to vertex
                             map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], \
-                                            self.getVertex(x).getOutDegree()], \
+                                            float(self.getVertex(x).outSet[vertex.id])/self.getVertex(x).getTotalOutWeight()], \
                                 vertex.getIncomingKeys())]
         _A = np.dstack(_A)[0]
         connectedVertices = np.dstack(_A[0])[0]
         outDegrees = _A[1]
-        A[list(connectedVertices)] = float(1) / outDegrees
+        A[list(connectedVertices)] = outDegrees
         return A
 
     def __getitem__(self, key):
@@ -268,6 +270,9 @@ class Vertex:
         '''
         return self.outSet.keys()
 
+    def getTotalOutWeight(self):
+        return sum(self.outSet.values())
+
 class PageRankNotAvailableException(Exception):
     def __init__(self, value):
         self.value = value
@@ -296,7 +301,7 @@ def testGraph():
     assert 'b' in g.getVertex('a').getOutgoingKeys()
     assert 'c' in g.getVertex('b').getIncomingKeys()
 
-    g.getPageRank()
+    g.getPageRank(weighted=False)
 
     g1 = Graph()
     g1.addVertex('a')
@@ -306,13 +311,24 @@ def testGraph():
     assert 'b' in g1.getVertex('a').getOutgoingKeys()
     assert 'a' in g1.getVertex('b').getIncomingKeys()
 
-    g1.getPageRank(method='iterativemethod')
+    g1.getPageRank(weighted=False, method='iterativemethod')
 
-    g2 = Graph()
-    g2.addSentence(1,'hi how are you')
-    g2.addSentence(2,"hi i'm fine")
-    print "out: %s" % map(lambda x: (x.id, x.outSet), g2.getVertices())
-    print "in:  %s" % map(lambda x: (x.id, x.inSet), g2.getVertices())
+    #g2 = Graph()
+    #g2.addSentence(1,'hi how are you')
+    #g2.addSentence(2,"hi i'm fine")
+    #print "out: %s" % map(lambda x: (x.id, x.outSet), g2.getVertices())
+    #print "in:  %s" % map(lambda x: (x.id, x.inSet), g2.getVertices())
+
+    g3 = Graph()
+    g3.addVertex('a')
+    g3.addVertex('b')
+    g3.addVertex('c')
+    g3.addVertex('d')
+    g3.addEdge('a','c',1)
+    g3.addEdge('a','b',2)
+    assert g3.getVertex('a').getTotalOutWeight() == 3
+    g3.addEdge('d','b',4)
+    print g3.buildWeightedA()
 
 if __name__ == '__main__':
     testGraph()
