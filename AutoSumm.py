@@ -23,9 +23,7 @@ smartStopWords = build_stop_words_set()
 
 def tokenizeIntoSentences(text):
     ''' Tokenizes input text into sentences using the MBSP parser.  '''
-    #contents = re.sub('\'s|(\n\n)|(\r\n)|-+|\'\'|["_]', ' ', text) # remove \r\n, apostrophes, quotes and dashes
-    contents = text
-    return split(contents.strip())
+    return split(text.strip())
 
 def getBoW(sentence):
     ''' Returns a bag of words for the sentence '''
@@ -47,6 +45,6 @@ def summarizeText(text, n=5):
     return rankedSentences[:n]
 
 if __name__ == '__main__':
-    text = open(path.join(CORPUSPATH,'test.txt'),'r').read()
+    text = open(path.join(CORPUSPATH,'test1.txt'),'r').read()
     rankedSentences = summarizeText(text)
     pprint(rankedSentences)

@@ -34,14 +34,16 @@ class Graph:
 
     def addSentence(self, index, bow):
         self.addVertex(index)
-        thisVertex = self.getVertex(index)
-        thisVertex.bag = bow
-        for otherVertex in self:
-            edgeWeight = self.calculateSimilarity(otherVertex.bag, thisVertex.bag)
-            self.addEdge(index, otherVertex.id, edgeWeight)
+        self.getVertex(index).bag = bow
+
+    def computeSimilarity(self):
+        for firstVertex in self:
+            for secondVertex in self:
+                edgeWeight = self.calculateSimilarity(secondVertex.bag, firstVertex.bag)
+                self.addEdge(firstVertex.id, secondVertex.id, edgeWeight)
 
     def calculateSimilarity(self, bag1, bag2):
-        return float(len(bag1.intersection(bag2)))/(log(len(bag1)) + log(len(bag2))) # normalize by sentence lengths
+        return float(len(bag1.intersection(bag2)))/(log(len(bag1) + len(bag2))) # normalize by sentence lengths
                                                                                      # to avoid bias towards longer sentences
 
     def getVertex(self, key):
@@ -70,6 +72,8 @@ class Graph:
 
         if self.N == 0:
             raise PageRankNotAvailableException("empty graph!")
+
+        self.computeSimilarity()
 
         if weighted:
             pRank = np.ones(self.N) / self.N # TODO: change this??
