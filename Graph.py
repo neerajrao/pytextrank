@@ -4,11 +4,13 @@
 import numpy as np
 import re
 from math import log
+from os import path
 
 DAMPING = 0.85
 MAX_ITER = 1000
 TOL = 1e-6
 PAGERANKMETHODS = ['powermethod','iterativemethod']
+SRCDIR = path.dirname(path.realpath(__file__))
 
 class Graph:
     def __init__(self):
@@ -30,10 +32,10 @@ class Graph:
             self.addVertex(toKey)
         self.getVertex(toKey).inSet[fromKey] = edgeWeight # Adds incoming connection to vertex
 
-    def addSentence(self, index, sentence):
+    def addSentence(self, index, bow):
         self.addVertex(index)
         thisVertex = self.getVertex(index)
-        thisVertex.bag = set(re.findall(r"[\w']+", sentence))
+        thisVertex.bag = bow
         for otherVertex in self:
             edgeWeight = self.calculateSimilarity(otherVertex.bag, thisVertex.bag)
             self.addEdge(index, otherVertex.id, edgeWeight)
@@ -312,12 +314,6 @@ def testGraph():
     assert 'a' in g1.getVertex('b').getIncomingKeys()
 
     g1.getPageRank(weighted=False, method='iterativemethod')
-
-    #g2 = Graph()
-    #g2.addSentence(1,'hi how are you')
-    #g2.addSentence(2,"hi i'm fine")
-    #print "out: %s" % map(lambda x: (x.id, x.outSet), g2.getVertices())
-    #print "in:  %s" % map(lambda x: (x.id, x.inSet), g2.getVertices())
 
     g3 = Graph()
     g3.addVertex('a')
