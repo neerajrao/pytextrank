@@ -175,10 +175,9 @@ class Graph:
         Note: This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
         A = np.zeros((self.N, self.N))
-        _A = [elem for vertex in self for elem in \
-                            # x connects to vertex
-                            map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], \
-                                            self.getVertex(x).getOutDegree()], \
+        _A = [elem for vertex in self for elem in
+                            map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], # x connects to vertex
+                                            self.getVertex(x).getOutDegree()],
                                 vertex.getIncomingKeys())]
         _A = np.dstack(_A)[0]
         connectedVertices = np.dstack(_A[0])[0]
@@ -233,14 +232,12 @@ class Graph:
         Note: This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
         A = np.zeros((self.N, self.N))
-        _A = [elem for vertex in self for elem in \
-                            # x connects to vertex
-                            map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], \
-                                            float(self.getVertex(x).outSet[vertex.id])/self.getVertex(x).getTotalOutWeight()], \
+        _A = [elem for vertex in self for elem in
+                            map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], # x connects to vertex
+                                            float(self.getVertex(x).outSet[vertex.id])/self.getVertex(x).getTotalOutWeight()],
                                 vertex.getIncomingKeys())]
-        _A = np.dstack(_A)[0]
-        connectedVertices = np.dstack(_A[0])[0]
-        outDegrees = _A[1]
+        connectedVertices, outDegrees = np.dstack(_A)[0]
+        connectedVertices = np.dstack(connectedVertices)[0]
         A[list(connectedVertices)] = outDegrees
         return A
 
