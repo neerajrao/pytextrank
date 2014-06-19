@@ -10,53 +10,53 @@ from os import path
 DAMPING = 0.85
 MAX_ITER = 1000
 TOL = 1e-6
-PAGERANKMETHODS = ['powermethod','iterativemethod']
+PAGERANKMETHODS = ['power_method','iterativemethod']
 
 class Graph:
     def __init__(self):
-        self.vertSet = {}
-        self.vertNum = {}
+        self.vert_set = {}
+        self.vert_num = {}
         self.N = 0
 
-    def addVertex(self, key):
-        if not key in self.vertSet:
-            self.vertSet[key] = Vertex(key)
-            self.vertNum[key] = self.N
+    def add_vertex(self, key):
+        if not key in self.vert_set:
+            self.vert_set[key] = Vertex(key)
+            self.vert_num[key] = self.N
             self.N += 1
 
-    def addEdge(self, fromKey, toKey, edgeWeight=0):
-        if not fromKey in self:
-            self.addVertex(fromKey)
-        self.getVertex(fromKey).outSet[toKey] = edgeWeight # Adds outcoming connection from vertex
-        if not toKey in self:
-            self.addVertex(toKey)
-        self.getVertex(toKey).inSet[fromKey] = edgeWeight # Adds incoming connection to vertex
+    def add_edge(self, from_key, to_key, edge_weight=0):
+        if not from_key in self:
+            self.add_vertex(from_key)
+        self.get_vertex(from_key).out_set[to_key] = edge_weight # Adds outcoming connection from vertex
+        if not to_key in self:
+            self.add_vertex(to_key)
+        self.get_vertex(to_key).in_set[from_key] = edge_weight # Adds incoming connection to vertex
 
-    def addSentence(self, index, bow):
-        self.addVertex(index)
-        self.getVertex(index).bag = bow
+    def add_sentence(self, index, bow):
+        self.add_vertex(index)
+        self.get_vertex(index).bag = bow
 
-    def computeSimilarity(self):
-        for firstVertex in self:
-            for secondVertex in self:
-                edgeWeight = self.calculateSimilarity(secondVertex.bag, firstVertex.bag)
-                if edgeWeight > 0:
-                    self.addEdge(firstVertex.id, secondVertex.id, edgeWeight)
+    def compute_similarity(self):
+        for first_vertex in self:
+            for second_vertex in self:
+                edge_weight = self.calculate_similarity(second_vertex.bag, first_vertex.bag)
+                if edge_weight > 0:
+                    self.add_edge(first_vertex.id, second_vertex.id, edge_weight)
 
-    def calculateSimilarity(self, bag1, bag2):
+    def calculate_similarity(self, bag1, bag2):
         if (not bag1) or (not bag2):
             return 0
         else:
             return float(len(bag1.intersection(bag2)))/(log(len(bag1) + len(bag2))) # normalize by sentence lengths
                                                                                     # to avoid bias towards longer sentences
 
-    def getVertex(self, key):
-        return self.vertSet.get(key)
+    def get_vertex(self, key):
+        return self.vert_set.get(key)
 
-    def getVertices(self):
-        return self.vertSet.values()
+    def get_vertices(self):
+        return self.vert_set.values()
 
-    def getPageRank(self, weighted=True, method=PAGERANKMETHODS[0]):
+    def get_pagerank(self, weighted=True, method=PAGERANKMETHODS[0]):
         '''
         Calculate page rank of graph vertices.
 
@@ -64,12 +64,12 @@ class Graph:
         ---------
         weighted    If True, returns edge-weighted page rank
                     else,    returns normal page rank
-        method      'powermethod' uses the power method for calculating the page rank
+        method      'power_method' uses the power method for calculating the page rank
                     'iterative'   uses the iterative method for calculating the page rank
 
         Returns
         -------
-        pRank       pagerank array of shape [1,N] where N = number of vertices in graph.
+        pagerank       pagerank array of shape [1,N] where N = number of vertices in graph.
         '''
         if method not in PAGERANKMETHODS:
             raise PageRankNotAvailableException("'method' parameter must be one of the following: %s" % PAGERANKMETHODS)
@@ -77,64 +77,64 @@ class Graph:
         if self.N == 0:
             raise PageRankNotAvailableException("empty graph!")
 
-        self.computeSimilarity()
+        self.compute_similarity()
 
         if weighted:
-            pRank = np.ones(self.N) / self.N # initially all 1/N
+            pagerank = np.ones(self.N) / self.N # initially all 1/N
         else:
-            pRank = np.ones(self.N) / self.N # initially all 1/N
+            pagerank = np.ones(self.N) / self.N # initially all 1/N
 
         if(method == PAGERANKMETHODS[0]): # power method
             if weighted:
-                M = self.buildWeightedM()
+                M = self.build_weighted_M()
             else:
-                M = self.buildM()
+                M = self.build_M()
 
-            power = self.powerMethod(pRank, M)
+            power = self.power_method(pagerank, M)
             #print power
             return power
         else: # iterative method
             if weighted:
-                A = self.buildWeightedA()
+                A = self.build_weighted_A()
             else:
-                A = self.buildA()
+                A = self.build_A()
 
-            it = self.iterative(pRank, A)
+            it = self.iterative(pagerank, A)
             #print it
             return it
 
-    def powerMethod(self, pRank, M):
+    def power_method(self, pagerank, M):
         '''
         Calculate pagerank using the power method.
         '''
         M_hat = (DAMPING*M) + ((1-DAMPING)/self.N)
 
         for i in xrange(MAX_ITER):
-            newPRank = np.dot(M_hat,pRank)
-            err = np.abs(newPRank-pRank).sum()
+            new_pagerank = np.dot(M_hat,pagerank)
+            err = np.abs(new_pagerank-pagerank).sum()
             if err < self.N*TOL:
-                return newPRank/np.linalg.norm(newPRank)
-            pRank = newPRank
+                return new_pagerank/np.linalg.norm(new_pagerank)
+            pagerank = new_pagerank
         raise PageRankNotAvailableException('Pagerank did not terminate within %d iterations' % MAX_ITER)
 
-    def iterative(self, pRank, A):
+    def iterative(self, pagerank, A):
         '''
         Calculate pagerank using the iterative method.
         '''
-        newPRank = np.dot(DAMPING*A,pRank) + ((1-DAMPING)/self.N)
-        err = np.abs(newPRank-pRank).sum()
+        new_pagerank = np.dot(DAMPING*A,pagerank) + ((1-DAMPING)/self.N)
+        err = np.abs(new_pagerank-pagerank).sum()
         if err < TOL:
-            return newPRank
-        it = self.iterative(newPRank, A)
+            return new_pagerank
+        it = self.iterative(new_pagerank, A)
         return it/np.linalg.norm(it)
 
-    def buildM(self):
+    def build_M(self):
         '''
         Builds the Google Matrix M.
         This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
 
-        A = self.buildA()
+        A = self.build_A()
 
         # replace zero columns with initial probability 1/N so we have a column stochastic matrix
         # For example:
@@ -143,14 +143,14 @@ class Graph:
         #  [ 0.5  0.   0.   1. ]                    [ 0.5  0.25   0.25   1. ]
         #  [ 0.   0.   0.   0. ]]                   [ 0.   0.25   0.25   0. ]]
         sumA = np.sum(A, axis=0)
-        nonzeroindices = np.nonzero(sumA)
+        nonzero_indices = np.nonzero(sumA)
         sumA[sumA==0] += float(1)/self.N
-        sumA[nonzeroindices] = 0
+        sumA[nonzero_indices] = 0
         M = A + np.tile(sumA,(self.N,1))
 
         return M
 
-    def buildA(self):
+    def build_A(self):
         '''
         Returns an out-degree matrix that has elements set to 1/outdegree(x) for all
         elements (x,y) where vertex x connects to vertex y.
@@ -176,22 +176,21 @@ class Graph:
         '''
         A = np.zeros((self.N, self.N))
         _A = [elem for vertex in self for elem in
-                            map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], # x connects to vertex
-                                            self.getVertex(x).getOutDegree()],
-                                vertex.getIncomingKeys())]
-        _A = np.dstack(_A)[0]
-        connectedVertices = np.dstack(_A[0])[0]
-        outDegrees = _A[1]
-        A[list(connectedVertices)] = float(1) / outDegrees
+                            map(lambda x: [[self.vert_num[vertex.id], self.vert_num[x]], # x connects to vertex
+                                            self.get_vertex(x).get_out_degree()],
+                                vertex.get_incoming_keys())]
+        connected_vertices, out_degrees = np.dstack(_A)[0]
+        connected_vertices = np.dstack(connected_vertices)[0]
+        A[list(connected_vertices)] = float(1) / out_degrees
         return A
 
-    def buildWeightedM(self):
+    def build_weighted_M(self):
         '''
         Builds the Google Matrix M.
         This matrix needs to be calculated only once per invocation of the Pagerank algorithm.
         '''
 
-        A = self.buildWeightedA()
+        A = self.build_weighted_A()
 
         # replace zero columns with initial probability 1/N so we have a column stochastic matrix
         # For example:
@@ -200,14 +199,14 @@ class Graph:
         #  [ 0.5  0.   0.   1. ]                    [ 0.5  0.25   0.25   1. ]
         #  [ 0.   0.   0.   0. ]]                   [ 0.   0.25   0.25   0. ]]
         sumA = np.sum(A, axis=0)
-        nonzeroindices = np.nonzero(sumA)
+        nonzero_indices = np.nonzero(sumA)
         sumA[sumA==0] += float(1)/self.N
-        sumA[nonzeroindices] = 0
+        sumA[nonzero_indices] = 0
         M = A + np.tile(sumA,(self.N,1))
 
         return M
 
-    def buildWeightedA(self):
+    def build_weighted_A(self):
         '''
         Returns an out-degree matrix that has elements set to weight(edge(x,y))/(sum(weight(edge(x,n)) for all n))
         for each pair (x,y) where vertex x connects to vertex y.
@@ -233,78 +232,78 @@ class Graph:
         '''
         A = np.zeros((self.N, self.N))
         _A = [elem for vertex in self for elem in
-                            map(lambda x: [[self.vertNum[vertex.id], self.vertNum[x]], # x connects to vertex
-                                            float(self.getVertex(x).outSet[vertex.id])/self.getVertex(x).getTotalOutWeight()],
-                                vertex.getIncomingKeys())]
-        connectedVertices, outDegrees = np.dstack(_A)[0]
-        connectedVertices = np.dstack(connectedVertices)[0]
-        A[list(connectedVertices)] = outDegrees
+                            map(lambda x: [[self.vert_num[vertex.id], self.vert_num[x]], # x connects to vertex
+                                            float(self.get_vertex(x).out_set[vertex.id])/self.get_vertex(x).get_total_out_weight()],
+                                vertex.get_incoming_keys())]
+        connected_vertices, out_weight = np.dstack(_A)[0]
+        connected_vertices = np.dstack(connected_vertices)[0]
+        A[list(connected_vertices)] = out_weight
         return A
 
-    def getHITS(self):
+    def get_HITS(self):
         """ Calculate page rank of graph vertices. """
 
-        self.computeSimilarity()
+        self.compute_similarity()
 
-        auth = np.ones(self.N)/self.N
+        auths = np.ones(self.N)/self.N
         hubs = np.ones(self.N)/self.N
 
-        A = self.buildWeightedA()
+        A = self.build_weighted_A()
         At = A.T
 
         for i in xrange(MAX_ITER):
-            newAuth = np.dot(A, hubs)
-            newHubs = np.dot(At, auth)
+            new_auths = np.dot(A, hubs)
+            new_hubs = np.dot(At, auths)
 
-            authErr = np.abs(newAuth-auth).sum()
-            hubsErr = np.abs(newHubs-hubs).sum()
+            auths_error = np.abs(new_auths-auths).sum()
+            hubs_error = np.abs(new_hubs-hubs).sum()
 
-            if (authErr < self.N*TOL) or (hubsErr < self.N*TOL):
-                return newAuth/np.linalg.norm(newAuth), newHubs/np.linalg.norm(newHubs)
+            if (auths_error < self.N*TOL) or (hubs_error < self.N*TOL):
+                return new_auths/np.linalg.norm(new_auths), new_hubs/np.linalg.norm(new_hubs)
 
-            auth = newAuth / np.linalg.norm(newAuth)
-            hubs = newHubs / np.linalg.norm(newHubs)
+            auths = new_auths / np.linalg.norm(new_auths)
+            hubs = new_hubs / np.linalg.norm(new_hubs)
 
         raise HITSNotAvailableException('HITS did not terminate within %d iterations' % MAX_ITER)
 
     def __getitem__(self, key):
-        return self.getVertex(key)
+        return self.get_vertex(key)
 
     def __contains__(self, key):
-        return key in self.vertSet
+        return key in self.vert_set
 
     def __iter__(self):
-        return iter(self.getVertices())
+        return iter(self.get_vertices())
 
 class Vertex:
     def __init__(self, key):
         self.id = key
-        self.outSet = {} # outgoing edges
-        self.inSet = {} # incoming edges
+        self.out_set = {} # outgoing edges
+        self.in_set = {} # incoming edges
         self.bag = set()
 
-    def getIncomingKeys(self):
+    def get_incoming_keys(self):
         '''
         Returns a list of keys of vertices connected to
         this node by incoming edges.
         '''
-        return self.inSet.keys()
+        return self.in_set.keys()
 
-    def getInDegree(self):
-        return len(self.inSet.keys())
+    def get_in_degree(self):
+        return len(self.in_set.keys())
 
-    def getOutDegree(self):
-        return len(self.outSet.keys())
+    def get_out_degree(self):
+        return len(self.out_set.keys())
 
-    def getOutgoingKeys(self):
+    def get_outgoing_keys(self):
         '''
         Returns a list of keys of vertices connected to
         this node by outgoing edges.
         '''
-        return self.outSet.keys()
+        return self.out_set.keys()
 
-    def getTotalOutWeight(self):
-        return sum(self.outSet.values())
+    def get_total_out_weight(self):
+        return sum(self.out_set.values())
 
 class PageRankNotAvailableException(Exception):
     def __init__(self, value):
@@ -320,50 +319,50 @@ class HITSNotAvailableException(Exception):
     def __str__(self):
         return repr(self.value)
 
-def testGraph():
+def test_graph():
     g = Graph()
-    g.addVertex('a')
-    g.addEdge('a','d',10)
-    g.addVertex('b')
-    g.addVertex('c')
+    g.add_vertex('a')
+    g.add_edge('a','d',10)
+    g.add_vertex('b')
+    g.add_vertex('c')
     assert g.N == 4
-    assert g.getVertex('a') <> None
-    assert g.getVertex('e') == None # non-existent key
-    assert 'd' in g.getVertex('a').getOutgoingKeys()
-    assert 'a' in g.getVertex('d').getIncomingKeys()
+    assert g.get_vertex('a') <> None
+    assert g.get_vertex('e') == None # non-existent key
+    assert 'd' in g.get_vertex('a').get_outgoing_keys()
+    assert 'a' in g.get_vertex('d').get_incoming_keys()
 
-    g.addVertex('a')                                   # key 'a' is already in the graph
+    g.add_vertex('a')                                   # key 'a' is already in the graph
     assert g.N == 4                                 # nothing should have been added
-    assert 'd' in g.getVertex('a').getOutgoingKeys() # the old node should have been left untouched
+    assert 'd' in g.get_vertex('a').get_outgoing_keys() # the old node should have been left untouched
 
-    g.addEdge('a','b')
-    g.addEdge('c','b')
-    assert 'b' in g.getVertex('a').getOutgoingKeys()
-    assert 'c' in g.getVertex('b').getIncomingKeys()
+    g.add_edge('a','b')
+    g.add_edge('c','b')
+    assert 'b' in g.get_vertex('a').get_outgoing_keys()
+    assert 'c' in g.get_vertex('b').get_incoming_keys()
 
-    g.getPageRank(weighted=False)
+    g.get_pagerank(weighted=False)
 
     g1 = Graph()
-    g1.addVertex('a')
-    g1.addVertex('b')
-    g1.addVertex('c')
-    g1.addEdge('a','b',10)
-    assert 'b' in g1.getVertex('a').getOutgoingKeys()
-    assert 'a' in g1.getVertex('b').getIncomingKeys()
+    g1.add_vertex('a')
+    g1.add_vertex('b')
+    g1.add_vertex('c')
+    g1.add_edge('a','b',10)
+    assert 'b' in g1.get_vertex('a').get_outgoing_keys()
+    assert 'a' in g1.get_vertex('b').get_incoming_keys()
 
-    g1.getPageRank(weighted=False, method='iterativemethod')
-    print g1.getHITS()
+    g1.get_pagerank(weighted=False, method='iterativemethod')
+    print g1.get_HITS()
 
     g3 = Graph()
-    g3.addVertex('a')
-    g3.addVertex('b')
-    g3.addVertex('c')
-    g3.addVertex('d')
-    g3.addEdge('a','c',1)
-    g3.addEdge('a','b',2)
-    assert g3.getVertex('a').getTotalOutWeight() == 3
-    g3.addEdge('d','b',4)
-    print g3.buildWeightedA()
+    g3.add_vertex('a')
+    g3.add_vertex('b')
+    g3.add_vertex('c')
+    g3.add_vertex('d')
+    g3.add_edge('a','c',1)
+    g3.add_edge('a','b',2)
+    assert g3.get_vertex('a').get_total_out_weight() == 3
+    g3.add_edge('d','b',4)
+    print g3.build_weighted_A()
 
 if __name__ == '__main__':
-    testGraph()
+    test_graph()
