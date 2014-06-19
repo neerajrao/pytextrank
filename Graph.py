@@ -1,5 +1,6 @@
 # Graph
 # Implements Weighted-PageRank
+# Implements HITS
 
 import numpy as np
 import re
@@ -10,7 +11,6 @@ DAMPING = 0.85
 MAX_ITER = 1000
 TOL = 1e-6
 PAGERANKMETHODS = ['powermethod','iterativemethod']
-SRCDIR = path.dirname(path.realpath(__file__))
 
 class Graph:
     def __init__(self):
@@ -40,11 +40,15 @@ class Graph:
         for firstVertex in self:
             for secondVertex in self:
                 edgeWeight = self.calculateSimilarity(secondVertex.bag, firstVertex.bag)
-                self.addEdge(firstVertex.id, secondVertex.id, edgeWeight)
+                if edgeWeight > 0:
+                    self.addEdge(firstVertex.id, secondVertex.id, edgeWeight)
 
     def calculateSimilarity(self, bag1, bag2):
-        return float(len(bag1.intersection(bag2)))/(log(len(bag1) + len(bag2))) # normalize by sentence lengths
-                                                                                # to avoid bias towards longer sentences
+        if (not bag1) or (not bag2):
+            return 0
+        else:
+            return float(len(bag1.intersection(bag2)))/(log(len(bag1) + len(bag2))) # normalize by sentence lengths
+                                                                                    # to avoid bias towards longer sentences
 
     def getVertex(self, key):
         return self.vertSet.get(key)
@@ -76,7 +80,7 @@ class Graph:
         self.computeSimilarity()
 
         if weighted:
-            pRank = np.ones(self.N) / self.N # TODO: change this??
+            pRank = np.ones(self.N) / self.N # initially all 1/N
         else:
             pRank = np.ones(self.N) / self.N # initially all 1/N
 
@@ -240,6 +244,32 @@ class Graph:
         A[list(connectedVertices)] = outDegrees
         return A
 
+    def getHITS(self):
+        """ Calculate page rank of graph vertices. """
+
+        self.computeSimilarity()
+
+        auth = np.ones(self.N)/self.N
+        hubs = np.ones(self.N)/self.N
+
+        A = self.buildWeightedA()
+        At = A.T
+
+        for i in xrange(MAX_ITER):
+            newAuth = np.dot(A, hubs)
+            newHubs = np.dot(At, auth)
+
+            authErr = np.abs(newAuth-auth).sum()
+            hubsErr = np.abs(newHubs-hubs).sum()
+
+            if (authErr < self.N*TOL) or (hubsErr < self.N*TOL):
+                return newAuth/np.linalg.norm(newAuth), newHubs/np.linalg.norm(newHubs)
+
+            auth = newAuth / np.linalg.norm(newAuth)
+            hubs = newHubs / np.linalg.norm(newHubs)
+
+        raise HITSNotAvailableException('HITS did not terminate within %d iterations' % MAX_ITER)
+
     def __getitem__(self, key):
         return self.getVertex(key)
 
@@ -254,7 +284,7 @@ class Vertex:
         self.id = key
         self.outSet = {} # outgoing edges
         self.inSet = {} # incoming edges
-        self.bag = {}
+        self.bag = set()
 
     def getIncomingKeys(self):
         '''
@@ -280,6 +310,13 @@ class Vertex:
         return sum(self.outSet.values())
 
 class PageRankNotAvailableException(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
+class HITSNotAvailableException(Exception):
     def __init__(self, value):
         self.value = value
 
@@ -313,11 +350,12 @@ def testGraph():
     g1.addVertex('a')
     g1.addVertex('b')
     g1.addVertex('c')
-    g1.addEdge('a','b')
+    g1.addEdge('a','b',10)
     assert 'b' in g1.getVertex('a').getOutgoingKeys()
     assert 'a' in g1.getVertex('b').getIncomingKeys()
 
     g1.getPageRank(weighted=False, method='iterativemethod')
+    print g1.getHITS()
 
     g3 = Graph()
     g3.addVertex('a')
