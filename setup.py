@@ -8,5 +8,6 @@ setup(name='graph-ranked-summarization',
       test_suite='tests',
       install_requires=[
           'numpy',
+          'nltk'
       ],
       zip_safe=False)
