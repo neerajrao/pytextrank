@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='graph-ranked-summarization',
       version='0.1',
@@ -8,7 +8,5 @@ setup(name='graph-ranked-summarization',
       test_suite='tests',
       install_requires=[
           'numpy',
-          'MBSP'
       ],
-      dependency_links=['git+https://github.com/clips/MBSP#egg=MBSP'],
       zip_safe=False)
