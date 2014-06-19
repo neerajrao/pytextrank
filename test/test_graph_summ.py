@@ -1,10 +1,12 @@
+# Tests for graph_summ
+
 import env
 from unittest import TestCase, main
-from src import graph_summ
+import graph_summ
 from os import path
 
-SRCDIR = path.dirname(path.realpath(__file__))
-CORPUSPATH = path.join(SRCDIR,'../corpus')
+TESTDIR = path.dirname(path.realpath(__file__))
+CORPUSPATH = path.join(TESTDIR,'corpus')
 
 class GraphSummTest(TestCase):
     def setUp(self):

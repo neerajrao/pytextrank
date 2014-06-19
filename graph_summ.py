@@ -9,7 +9,7 @@ import re
 from MBSP.tokenizer import split as mbsp_split
 
 SRCDIR = path.dirname(path.realpath(__file__))
-CORPUSPATH = path.join(SRCDIR,'../corpus')
+CORPUSPATH = path.join(SRCDIR,'test/corpus')
 SUMMARIZATIONMETHODS = ['pagerank','hits_auths','hits_hubs']
 
 def build_stop_words_set():
