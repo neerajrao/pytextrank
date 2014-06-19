@@ -34,8 +34,8 @@ def getBoW(sentence):
             cleanWords.append(word)
     return set(cleanWords)
 
-def summarizeText(text, n=5):
-    ''' Returns a list of length n with most important strings as ranked by page rank. '''
+def summarizeText(text, n=4):
+    ''' Returns a list with n most important strings ranked in decreasing order of page rank. '''
     sentenceList = tokenizeIntoSentences(text)
     g = Graph.Graph()
     for index, sentence in enumerate(sentenceList):
@@ -45,6 +45,6 @@ def summarizeText(text, n=5):
     return rankedSentences[:n]
 
 if __name__ == '__main__':
-    text = open(path.join(CORPUSPATH,'test1.txt'),'r').read()
+    text = open(path.join(CORPUSPATH,'test.txt'),'r').read()
     rankedSentences = summarizeText(text)
     pprint(rankedSentences)

@@ -44,7 +44,7 @@ class Graph:
 
     def calculateSimilarity(self, bag1, bag2):
         return float(len(bag1.intersection(bag2)))/(log(len(bag1) + len(bag2))) # normalize by sentence lengths
-                                                                                     # to avoid bias towards longer sentences
+                                                                                # to avoid bias towards longer sentences
 
     def getVertex(self, key):
         return self.vertSet.get(key)
