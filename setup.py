@@ -8,6 +8,7 @@ setup(name='Extractive summarization using Graph-based Ranking Models (TextRank)
       test_suite='tests',
       install_requires=[
           'numpy',
-          'nltk'
+          'nltk',
+          'goose-extractor'
       ],
       zip_safe=False)
