@@ -9,5 +9,5 @@ install:
   - "pip install numpy"
 
 script:
-  - export TARGET="-m tests.test_graph_summ"
+  - export TARGET="-m unittest discover tests 'test_*.py'"
   - python $TARGET
