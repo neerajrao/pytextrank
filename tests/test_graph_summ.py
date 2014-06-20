@@ -29,9 +29,11 @@ class GraphSummTest(TestCase):
         self.assertEqual(graph_summ.summarize_text(self.test_text, method='hits_auths'), self.expected_output_hits_auth)
 
     def test_summarize_file_hits_hubs(self):
+        print graph_summ.summarize_file(self.file_name, method='hits_hubs')
         self.assertEqual(graph_summ.summarize_file(self.file_name, method='hits_hubs'), self.expected_output_hits_hubs)
 
     def test_summarize_text_hits_hubs(self):
+        print graph_summ.summarize_text(self.test_text, method='hits_hubs')
         self.assertEqual(graph_summ.summarize_text(self.test_text, method='hits_hubs'), self.expected_output_hits_hubs)
 
 if __name__ == '__main__':

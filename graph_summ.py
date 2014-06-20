@@ -61,6 +61,8 @@ def summarize_text(text, n=4, method=SUMMARIZATIONMETHODS[0]):
         return ' '.join(ranked_sentences[:n])
     else:
         auth, hubs = g.get_HITS()
+        print auth
+        print hubs
         ranked_sentences = map(lambda x: sentenceList[x], np.argsort(hubs)[::-1])
         return ' '.join(ranked_sentences[:n])
 
