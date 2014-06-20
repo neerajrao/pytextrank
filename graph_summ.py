@@ -55,16 +55,14 @@ def summarize_text(text, n=4, method=SUMMARIZATIONMETHODS[0]):
         pageRank = g.get_pagerank()
         ranked_sentences = map(lambda x: sentenceList[x], np.argsort(pageRank)[::-1])
         return ' '.join(ranked_sentences[:n])
-    elif method == SUMMARIZATIONMETHODS[1]:
-        auth, hubs = g.get_HITS()
-        ranked_sentences = map(lambda x: sentenceList[x], np.argsort(auth)[::-1])
-        return ' '.join(ranked_sentences[:n])
     else:
         auth, hubs = g.get_HITS()
-        print auth
-        print hubs
-        ranked_sentences = map(lambda x: sentenceList[x], np.argsort(hubs)[::-1])
-        return ' '.join(ranked_sentences[:n])
+        if method == SUMMARIZATIONMETHODS[1]:
+            ranked_sentences = map(lambda x: sentenceList[x], np.argsort(auth)[::-1])
+            return ' '.join(ranked_sentences[:n])
+        else:
+            ranked_sentences = map(lambda x: sentenceList[x], np.argsort(hubs)[::-1])
+            return ' '.join(ranked_sentences[:n])
 
 def summarize_file(file_name, n=4, method=SUMMARIZATIONMETHODS[0]):
     text = open(file_name, 'r').read().decode('utf-8','ignore')

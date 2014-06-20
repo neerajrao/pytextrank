@@ -245,24 +245,29 @@ class Graph:
 
         self.compute_similarity()
 
-        auths = np.ones(self.N)/self.N
-        hubs = np.ones(self.N)/self.N
+        auths = np.ones(self.N) #/self.N
+        hubs = np.ones(self.N) #/self.N
 
         A = self.build_weighted_A()
         At = A.T
 
         for i in xrange(MAX_ITER):
             new_auths = np.dot(A, hubs)
-            new_hubs = np.dot(At, auths)
+            new_hubs = np.dot(At, new_auths)
+
+            new_auths = new_auths/np.sum(new_auths)
+            new_hubs = new_hubs/np.sum(new_hubs)
 
             auths_error = np.abs(new_auths-auths).sum()
             hubs_error = np.abs(new_hubs-hubs).sum()
 
-            if (auths_error < self.N*TOL) or (hubs_error < self.N*TOL):
-                return new_auths/np.linalg.norm(new_auths), new_hubs/np.linalg.norm(new_hubs)
+            #print auths_error, hubs_error
 
-            auths = new_auths / np.linalg.norm(new_auths)
-            hubs = new_hubs / np.linalg.norm(new_hubs)
+            if (auths_error < self.N*TOL) or (hubs_error < self.N*TOL):
+                return new_auths, new_hubs
+
+            auths = new_auths
+            hubs = new_hubs
 
         raise HITSNotAvailableException('HITS did not terminate within %d iterations' % MAX_ITER)
 
