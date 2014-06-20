@@ -24,7 +24,7 @@ class Graph:
             self.vert_num[key] = self.N
             self.N += 1
 
-    def add_edge(self, from_key, to_key, edge_weight=0):
+    def add_edge(self, from_key, to_key, edge_weight=1):
         if not from_key in self:
             self.add_vertex(from_key)
         self.get_vertex(from_key).out_set[to_key] = edge_weight # Adds outcoming connection from vertex
@@ -245,8 +245,8 @@ class Graph:
 
         self.compute_similarity()
 
-        auths = np.ones(self.N) #/self.N
-        hubs = np.ones(self.N) #/self.N
+        auths = np.ones(self.N)
+        hubs = np.ones(self.N)
 
         A = self.build_weighted_A()
         At = A.T
@@ -260,8 +260,6 @@ class Graph:
 
             auths_error = np.abs(new_auths-auths).sum()
             hubs_error = np.abs(new_hubs-hubs).sum()
-
-            #print auths_error, hubs_error
 
             if (auths_error < self.N*TOL) or (hubs_error < self.N*TOL):
                 return new_auths, new_hubs
@@ -365,7 +363,8 @@ def test_graph():
     g3.add_vertex('d')
     g3.add_edge('a','c',1)
     g3.add_edge('a','b',2)
-    assert g3.get_vertex('a').get_total_out_weight() == 3
+    g3.add_edge('a','d')
+    assert g3.get_vertex('a').get_total_out_weight() == 4
     g3.add_edge('d','b',4)
     print g3.build_weighted_A()
 
