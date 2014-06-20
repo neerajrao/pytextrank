@@ -9,11 +9,12 @@ import re
 from goose import Goose
 from nltk.data import load as nltk_load
 
-tokenizer = nltk_load('file:english.pickle')
 
 SRCDIR = path.dirname(path.realpath(__file__))
 CORPUSPATH = path.join(SRCDIR,'tests/corpus')
 SUMMARIZATIONMETHODS = ['pagerank','hits_auths','hits_hubs']
+
+tokenizer = nltk_load('file:%s' % path.join(SRCDIR, 'english.pickle'))
 
 def _build_stop_words_set():
     '''
