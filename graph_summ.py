@@ -6,7 +6,9 @@ from pprint import pprint
 import ranked_graph
 import numpy as np
 import re
-from nltk.tokenize import sent_tokenize
+from nltk.data import load as nltk_load
+
+tokenizer = nltk_load('file:english.pickle')
 
 SRCDIR = path.dirname(path.realpath(__file__))
 CORPUSPATH = path.join(SRCDIR,'tests/corpus')
@@ -24,7 +26,7 @@ SMARTSTOPWORDS = build_stop_words_set()
 
 def tokenize_into_sentences(text):
     ''' Tokenizes input text into sentences using NLTK.  '''
-    return [s for sentence in map(lambda x: sent_tokenize(unicode(x)), filter(lambda x: len(x) <> 0, text.split('\n'))) for s in sentence]
+    return [s for sentence in map(lambda x: tokenizer.tokenize(unicode(x)), filter(lambda x: len(x) <> 0, text.split('\n'))) for s in sentence]
 
 def get_bow(sentence):
     ''' Returns a bag of words for the sentence '''
