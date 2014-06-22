@@ -28,7 +28,7 @@ SMARTSTOPWORDS = _build_stop_words_set()
 
 def _tokenize_into_sentences(text):
     ''' Tokenizes input text into sentences using NLTK.  '''
-    return [s for sentence in map(lambda x: tokenizer.tokenize(unicode(x)), map(lambda x: x+'.', filter(lambda x: x <> None and re.match(r'.*\w+.*', x), re.split('(\n+)|[.]', text)))) for s in sentence]
+    return [s for sentence in map(lambda x: tokenizer.tokenize(unicode(x)), map(lambda x: x.strip()+'.', filter(lambda x: x <> None and re.match(r'.*\w+.*', x), re.split('(\n+)|[.]', text)))) for s in sentence]
 
 def _get_bow(sentence):
     ''' Returns a bag of words for the sentence '''
