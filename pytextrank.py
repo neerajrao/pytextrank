@@ -59,6 +59,9 @@ def summarize_text(text, n=4, method=SUMMARIZATIONMETHODS[0], join=False):
     back as a list if join argument is False, or as a string is join argument is True
     '''
 
+    if len(text) == 0:
+        return None
+
     if method not in SUMMARIZATIONMETHODS:
         raise PageRankNotAvailableException("'method' parameter must be one of the following: %s" % SUMMARIZATIONMETHODS)
 
@@ -87,6 +90,7 @@ def summarize_text(text, n=4, method=SUMMARIZATIONMETHODS[0], join=False):
 def summarize_file(file_name, n=4, method=SUMMARIZATIONMETHODS[0], join=False):
     ''' Summarize text from file '''
     text = open(file_name, 'r').read().decode('utf-8','ignore')
+
     return summarize_text(text, n=n, method=method, join=join)
 
 def summarize_url(url, n=4, method=SUMMARIZATIONMETHODS[0], join=False):
@@ -96,12 +100,12 @@ def summarize_url(url, n=4, method=SUMMARIZATIONMETHODS[0], join=False):
         extracted_article = _pluck_the_goose(url)
     except IOError:
         print 'Error reading from %s' % url
-        return None
+        return None, None
 
     if not extracted_article or not extracted_article.cleaned_text or not extracted_article.title:
-        return None
+        return None, None
 
-    return summarize_text(extracted_article.cleaned_text, n=n, method=method, join=join)
+    return extracted_article.title, summarize_text(extracted_article.cleaned_text, n=n, method=method, join=join)
 
 def _pluck_the_goose(inurl):
     ''' Extracts article from URL using Goose '''

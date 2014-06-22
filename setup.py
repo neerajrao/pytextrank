@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-setup(name='graph_summ',
+setup(name='pytextrank',
       version='0.1',
       description='Text Summarization using Graph-based Ranking Models',
       url='https://github.com/neeraj2608/graph-ranked-summarization',

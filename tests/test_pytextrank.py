@@ -1,8 +1,8 @@
-# Tests for graph_summ
+# Tests for pytextrank
 
 import env
 from unittest import TestCase, main
-import graph_summ
+import pytextrank
 from os import path
 
 TESTDIR = path.dirname(path.realpath(__file__))
@@ -18,28 +18,28 @@ class GraphSummTest(TestCase):
         self.expected_output_hits_hubs = u"In the late 19th and early 20th centuries, victories in the First Sino-Japanese War, the Russo-Japanese War and World War I allowed Japan to expand its empire during a period of increasing militarism. Although Japan has officially renounced its right to declare war, it maintains a modern military with the world's eighth largest military budget, used for self-defense and peacekeeping roles. A major economic great power, Japan has the world's third-largest economy by nominal GDP and the world's fourth-largest economy by purchasing power parity. Japan entered into a long period of isolation in the early 17th century, which was only ended in 1853 when a United States fleet pressured Japan to open to the West."
 
     def test_summarize_file_pagerank(self):
-        self.assertEqual(graph_summ.summarize_file(self.file_name, join=True), self.expected_output_pagerank)
+        self.assertEqual(pytextrank.summarize_file(self.file_name, join=True), self.expected_output_pagerank)
 
     def test_summarize_text_pagerank(self):
-        self.assertEqual(graph_summ.summarize_text(self.test_text, join=True), self.expected_output_pagerank)
+        self.assertEqual(pytextrank.summarize_text(self.test_text, join=True), self.expected_output_pagerank)
 
     def test_summarize_file_pagerank_list(self):
-        self.assertEqual(graph_summ.summarize_file(self.file_name), self.expected_output_pagerank_list)
+        self.assertEqual(pytextrank.summarize_file(self.file_name), self.expected_output_pagerank_list)
 
     def test_summarize_text_pagerank_list(self):
-        self.assertEqual(graph_summ.summarize_text(self.test_text), self.expected_output_pagerank_list)
+        self.assertEqual(pytextrank.summarize_text(self.test_text), self.expected_output_pagerank_list)
 
     def test_summarize_file_hits_auth(self):
-        self.assertEqual(graph_summ.summarize_file(self.file_name, method='hits_auths', join=True), self.expected_output_hits_auth)
+        self.assertEqual(pytextrank.summarize_file(self.file_name, method='hits_auths', join=True), self.expected_output_hits_auth)
 
     def test_summarize_text_hits_auth(self):
-        self.assertEqual(graph_summ.summarize_text(self.test_text, method='hits_auths', join=True), self.expected_output_hits_auth)
+        self.assertEqual(pytextrank.summarize_text(self.test_text, method='hits_auths', join=True), self.expected_output_hits_auth)
 
     def test_summarize_file_hits_hubs(self):
-        self.assertEqual(graph_summ.summarize_file(self.file_name, method='hits_hubs', join=True), self.expected_output_hits_hubs)
+        self.assertEqual(pytextrank.summarize_file(self.file_name, method='hits_hubs', join=True), self.expected_output_hits_hubs)
 
     def test_summarize_text_hits_hubs(self):
-        self.assertEqual(graph_summ.summarize_text(self.test_text, method='hits_hubs', join=True), self.expected_output_hits_hubs)
+        self.assertEqual(pytextrank.summarize_text(self.test_text, method='hits_hubs', join=True), self.expected_output_hits_hubs)
 
 if __name__ == '__main__':
     main()
